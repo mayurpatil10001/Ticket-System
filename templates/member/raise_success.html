@@ -1,0 +1,26 @@
+{% extends "base_member.html" %}
+{% block title %}Ticket Raised — Concave Insights Support{% endblock %}
+{% set active_nav = 'tickets' %}
+
+{% block member_content %}
+<div style="text-align:center;padding:var(--s8) 0;">
+  <div class="page-kicker">TICKET CREATED</div>
+  <div style="font-family:var(--font-mono);font-size:var(--step-5);font-weight:500;letter-spacing:.02em;color:var(--ink);margin:var(--s5) 0;">
+    {{ ticket.public_id }}
+  </div>
+  <p style="color:var(--ink-2);margin-bottom:var(--s3);">Your ticket has been raised.</p>
+  {% if ticket.queued_for_next_shift %}
+  <div class="alert-banner--amber" style="display:inline-block;margin-bottom:var(--s5);text-align:left;">
+    Our team is currently offline. We'll pick this up at the start of the next shift (Mon–Sat, 9 AM IST).
+  </div>
+  {% else %}
+  <p style="font-size:var(--step--1);color:var(--ink-2);margin-bottom:var(--s5);">
+    Expected reply by {{ ticket.due_at | ist if ticket.due_at else 'within working hours' }}.
+  </p>
+  {% endif %}
+  <div style="display:flex;gap:var(--s4);justify-content:center;flex-wrap:wrap;">
+    <a href="/member/tickets/{{ ticket.public_id }}" class="btn btn-primary">View ticket</a>
+    <a href="/member/tickets" class="btn btn-secondary">My Tickets</a>
+  </div>
+</div>
+{% endblock %}

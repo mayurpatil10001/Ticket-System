@@ -1,0 +1,41 @@
+{% extends "base_member.html" %}
+{% from "components/macros.html" import status_marker, tat_meter, ticket_id %}
+{% block title %}My Tickets — Concave Insights Support{% endblock %}
+{% set active_nav = 'tickets' %}
+
+{% block member_content %}
+<div class="page-kicker">TICKETS / {{ tickets | length }} {% if tab == 'active' %}ACTIVE{% elif tab == 'resolved' %}RESOLVED{% else %}TOTAL{% endif %}</div>
+<h1 class="page-title">My Tickets</h1>
+<div class="page-title-rule"></div>
+
+<nav class="tab-row" aria-label="Ticket filters">
+  <a href="/member/tickets?tab=active" class="tab-link {% if tab == 'active' %}active{% endif %}">Active</a>
+  <a href="/member/tickets?tab=resolved" class="tab-link {% if tab == 'resolved' %}active{% endif %}">Resolved</a>
+  <a href="/member/tickets?tab=all" class="tab-link {% if tab == 'all' %}active{% endif %}">All</a>
+</nav>
+
+{% if tickets %}
+<div style="background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius);">
+  {% for ticket in tickets %}
+  <a href="/member/tickets/{{ ticket.public_id }}" class="m-ticket-row">
+    <div class="m-ticket-row__top">
+      <span class="m-ticket-row__subject">{{ ticket.subject }}</span>
+      {% if ticket.status == 'Escalated' or ticket.status == 'Reopened' %}
+      <span class="unread-dot"></span>
+      {% endif %}
+    </div>
+    <div class="m-ticket-row__meta">
+      <span class="mono">{{ ticket.public_id }}</span>
+      {{ status_marker(ticket.status) }}
+      <span>{{ ticket.updated_at | timesince }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">Nothing raised yet. If a payment is late or your UPI ID is wrong, tell us here and we'll track it.</p>
+  <a href="/member/raise" class="btn btn-primary">Raise a ticket</a>
+</div>
+{% endif %}
+{% endblock %}

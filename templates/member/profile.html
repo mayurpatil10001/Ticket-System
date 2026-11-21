@@ -1,0 +1,35 @@
+{% extends "base_member.html" %}
+{% block title %}Profile — Concave Insights Support{% endblock %}
+{% set active_nav = 'profile' %}
+
+{% block member_content %}
+<div class="page-kicker">ACCOUNT</div>
+<h1 class="page-title">Profile</h1>
+<div class="page-title-rule"></div>
+
+<div class="panel">
+  <table style="width:100%;border-collapse:collapse;">
+    {% set fields = [('Name', user.name), ('Email', user.email), ('Phone', user.phone), ('City', user.city or '—'), ('Date of birth', user.dob or '—'), ('UPI ID', user.upi_id or '—')] %}
+    {% for label, value in fields %}
+    <tr style="border-bottom:1px solid var(--hairline);">
+      <td style="padding:var(--s3) var(--s4) var(--s3) 0;font-size:var(--step--1);color:var(--ink-2);font-weight:600;white-space:nowrap;width:40%;">{{ label }}</td>
+      <td style="padding:var(--s3) 0;font-size:var(--step-0);">{{ value }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div style="margin-top:var(--s5);font-size:var(--step--1);color:var(--ink-2);">
+  To change any of these details, raise a Profile Change ticket.
+</div>
+<div style="margin-top:var(--s4);">
+  <a href="/member/raise/Profile%20change" class="btn btn-secondary btn-sm">Request a change</a>
+</div>
+
+<div style="margin-top:var(--s7);">
+  <form method="post" action="/logout">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-tertiary" style="color:var(--ink-2);">Log out</button>
+  </form>
+</div>
+{% endblock %}

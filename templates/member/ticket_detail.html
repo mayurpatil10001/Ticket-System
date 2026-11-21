@@ -1,0 +1,143 @@
+{% extends "base_member.html" %}
+{% from "components/macros.html" import status_marker, priority_ticks, tat_meter, ticket_id %}
+{% block title %}{{ ticket.public_id }} — Concave Insights Support{% endblock %}
+{% set active_nav = 'tickets' %}
+
+{% block member_content %}
+<a href="/member/tickets" style="font-size:var(--step--1);color:var(--ink-2);text-decoration:none;">&larr; My Tickets</a>
+
+<div style="margin-top:var(--s5);">
+  <div class="page-kicker">{{ ticket.category | upper }} / {{ ticket_id(ticket.public_id) }}</div>
+  <h1 class="page-title" style="font-size:var(--step-3);">{{ ticket.subject }}</h1>
+  <div class="page-title-rule"></div>
+
+  <div style="display:flex;align-items:center;gap:var(--s4);margin-bottom:var(--s4);flex-wrap:wrap;">
+    {{ status_marker(ticket.status) }}
+    {{ priority_ticks(ticket.priority) }}
+  </div>
+
+  {% if tat %}
+  <div style="margin-bottom:var(--s5);">
+    {{ tat_meter(tat, ticket.tat_minutes_snapshot) }}
+    {% if ticket.status not in ('Resolved','Closed') %}
+    <div style="font-size:var(--step--1);color:var(--ink-2);margin-top:var(--s2);">
+      {% if tat.state == 'paused' %}We've asked you for some information. Please reply below so we can continue.
+      {% elif tat.state == 'queued' %}Our team will pick this up at the next shift.
+      {% elif tat.state == 'overdue' %}We're sorry for the delay. This ticket has been escalated to our support head.
+      {% elif tat.due_at %}Reply expected by {{ tat.due_at | ist }}.
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if ticket.status == 'Resolved' and perms.can_confirm %}
+  <div class="panel" style="margin-bottom:var(--s6);border-left:var(--rule) solid var(--moss);">
+    <div style="font-weight:600;margin-bottom:var(--s3);">Was this sorted?</div>
+    <div style="font-size:var(--step--1);color:var(--ink-2);margin-bottom:var(--s4);">
+      If yes, close the ticket. If not, you can reopen it
+      {% if perms.reopens_left > 0 %} ({{ perms.reopens_left }} reopen{{ 's' if perms.reopens_left != 1 }} remaining
+      {% if perms.reopen_until %}, until {{ perms.reopen_until | replace('T',' ') | truncate(16, True, '') }}{% endif %}){% else %} — but you have used all your reopens{% endif %}.
+    </div>
+    <div style="display:flex;gap:var(--s3);flex-wrap:wrap;">
+      <form method="post" action="/member/tickets/{{ ticket.public_id }}/confirm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-primary btn-sm">Yes, close it</button>
+      </form>
+      {% if perms.can_reopen %}
+      <button type="button" class="btn btn-warn btn-sm"
+        onclick="document.getElementById('reopen-sheet').style.display='flex'">
+        No, reopen
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if perms.can_reopen %}
+  <div id="reopen-sheet" class="bottom-sheet-overlay" style="display:none;">
+    <div class="bottom-sheet">
+      <div style="font-weight:700;font-size:var(--step-1);">Reopen this ticket</div>
+      {% if reopen_error %}
+      <div class="alert-banner">{{ reopen_error }}</div>
+      {% endif %}
+      <form method="post" action="/member/tickets/{{ ticket.public_id }}/reopen" style="display:flex;flex-direction:column;gap:var(--s4);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="reopen-reason">Why are you reopening? <span style="color:var(--brand)">*</span></label>
+          <textarea id="reopen-reason" name="reason" rows="3" placeholder="Please explain what is still unresolved (minimum 5 characters)"></textarea>
+          <div class="helper">{{ perms.reopens_left }} reopen{{ 's' if perms.reopens_left != 1 }} remaining.</div>
+        </div>
+        <div style="display:flex;gap:var(--s3);">
+          <button type="submit" class="btn btn-primary">Reopen ticket</button>
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('reopen-sheet').style.display='none'">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if ticket.status == 'Closed' %}
+  <div class="panel" style="margin-bottom:var(--s6);border-left:var(--rule) solid var(--ink-3);">
+    <div style="font-size:var(--step-0);color:var(--ink-2);">This ticket is closed.
+    {% if not perms.can_reopen and ticket.reopen_count > 0 %}
+    You have used all your reopens.
+    {% endif %}
+    If you have a new issue, please raise a new ticket.</div>
+    <div style="margin-top:var(--s4);">
+      <a href="/member/raise" class="btn btn-secondary btn-sm">Raise a new ticket</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Thread -->
+  <div class="thread">
+    {% for msg in messages %}
+    <div class="thread-msg {% if msg.author.role in ('agent','head') %}thread-msg--agent{% endif %}">
+      <div class="thread-msg__meta">
+        <span class="thread-msg__author">{{ msg.author.name if msg.author else 'System' }}</span>
+        <span class="thread-msg__role">{{ msg.author.role if msg.author else 'system' }}</span>
+        <span class="thread-msg__time">{{ msg.created_at | ist }}</span>
+      </div>
+      <div class="thread-msg__body">{{ msg.body }}</div>
+    </div>
+    {% endfor %}
+
+    {% if not messages %}
+    <div style="padding:var(--s5) 0;color:var(--ink-3);font-size:var(--step--1);">
+      No replies yet. Our team will respond within the expected time.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Reply box -->
+  {% if ticket.status not in ('Resolved','Closed') %}
+  <div class="composer" style="margin-top:var(--s6);border-radius:var(--radius);">
+    {% if error %}
+    <div class="alert-banner" style="margin-bottom:var(--s3);">{{ error }}<br><small>Your text is preserved below — try again.</small></div>
+    {% endif %}
+    <form method="post" action="/member/tickets/{{ ticket.public_id }}/reply" style="display:flex;flex-direction:column;gap:var(--s3);">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="field" style="margin:0;">
+        <label for="reply-body" class="sr-only">Your reply</label>
+        <textarea id="reply-body" name="body"
+          data-maxlength="2000"
+          placeholder="Write your reply…"
+          rows="4"
+          class="{% if errors and errors.body %}has-error{% endif %}">{{ reply_body or '' }}</textarea>
+        <div id="reply-body-counter" class="char-counter"></div>
+        {% if errors and errors.body %}<div class="error-msg">{{ errors.body }}</div>{% endif %}
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary btn-sm">Send reply</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/tat-live.js" defer></script>
+<script src="/static/js/composer.js" defer></script>
+{% endblock %}

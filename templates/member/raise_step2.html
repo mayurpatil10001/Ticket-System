@@ -1,0 +1,83 @@
+{% extends "base_member.html" %}
+{% block title %}Raise: {{ category }} — Concave Insights Support{% endblock %}
+{% set active_nav = 'raise' %}
+
+{% block member_content %}
+<a href="/member/raise" style="font-size:var(--step--1);color:var(--ink-2);text-decoration:none;">&larr; Back</a>
+<div class="page-kicker" style="margin-top:var(--s4);">RAISE / {{ category | upper }}</div>
+<h1 class="page-title">{{ category }}</h1>
+<div class="page-title-rule"></div>
+
+{% if error %}
+<div class="alert-banner" style="margin-bottom:var(--s5);">{{ error }}</div>
+{% endif %}
+
+{% set tat_h = (tat_minutes // 60) %}
+{% set tat_m = (tat_minutes % 60) %}
+<div style="margin-bottom:var(--s5);padding:var(--s4);border-left:var(--rule) solid var(--hairline-strong);font-size:var(--step--1);color:var(--ink-2);">
+  Typical reply: within
+  {% if tat_h > 0 %}{{ tat_h }} working hour{{ 's' if tat_h != 1 }}{% if tat_m > 0 %} {{ tat_m }} min{% endif %}
+  {% else %}{{ tat_m }} working minutes{% endif %}
+  (Mon–Sat, 9 AM–9 PM IST)
+</div>
+
+<form method="post" action="/member/raise/{{ category | urlencode }}" style="display:flex;flex-direction:column;gap:var(--s5);">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <div class="field">
+    <label for="description">Describe your issue <span style="color:var(--brand)">*</span></label>
+    <textarea id="description" name="description"
+      data-maxlength="2000"
+      placeholder="Please give as much detail as possible — survey name, date, amount, etc."
+      class="{% if errors and errors.description %}has-error{% endif %}"
+      rows="5">{{ form.description if form else '' }}</textarea>
+    <div id="description-counter" class="char-counter"></div>
+    {% if errors and errors.description %}
+    <div class="error-msg">{{ errors.description }}</div>
+    {% endif %}
+  </div>
+
+  {% if category != 'Profile change' %}
+  <div class="field">
+    <label for="survey_ref">Survey name or reference (optional)</label>
+    <input type="text" id="survey_ref" name="survey_ref" placeholder="e.g. Beauty Products Study, Nov 2026"
+           value="{{ form.survey_ref if form else '' }}" maxlength="300">
+  </div>
+  {% endif %}
+
+  {% if category == 'Profile change' %}
+  <div class="field">
+    <label for="requested_field">Which field do you want to change? <span style="color:var(--brand)">*</span></label>
+    <select id="requested_field" name="requested_field" class="{% if errors and errors.requested_field %}has-error{% endif %}">
+      <option value="">Select…</option>
+      <option value="Name" {% if form and form.requested_field == 'Name' %}selected{% endif %}>Name</option>
+      <option value="City" {% if form and form.requested_field == 'City' %}selected{% endif %}>City</option>
+      <option value="Date of birth" {% if form and form.requested_field == 'Date of birth' %}selected{% endif %}>Date of birth</option>
+      <option value="UPI ID" {% if form and form.requested_field == 'UPI ID' %}selected{% endif %}>UPI ID</option>
+    </select>
+    {% if errors and errors.requested_field %}
+    <div class="error-msg">{{ errors.requested_field }}</div>
+    {% endif %}
+  </div>
+
+  <div class="field">
+    <label for="requested_value">New value <span style="color:var(--brand)">*</span></label>
+    <input type="text" id="requested_value" name="requested_value"
+           placeholder="Enter the new value"
+           value="{{ form.requested_value if form else '' }}"
+           class="{% if errors and errors.requested_value %}has-error{% endif %}">
+    <div class="helper">For UPI ID use format: name@bank (e.g. priya.nair@okaxis)</div>
+    {% if errors and errors.requested_value %}
+    <div class="error-msg">{{ errors.requested_value }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Submit ticket</button>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/tat-live.js" defer></script>
+<script src="/static/js/composer.js" defer></script>
+{% endblock %}

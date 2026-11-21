@@ -1,0 +1,38 @@
+{% extends "base_member.html" %}
+{% from "components/macros.html" import icon %}
+{% block title %}Raise a Ticket — Concave Insights Support{% endblock %}
+{% set active_nav = 'raise' %}
+
+{% block member_content %}
+<div class="page-kicker">RAISE / STEP 1 OF 2</div>
+<h1 class="page-title">What's your query?</h1>
+<div class="page-title-rule"></div>
+
+<div class="category-grid">
+  <a href="/member/raise/Payment" class="category-tile">
+    {{ icon('payment', 24) }}
+    <span class="category-tile__name">Payment</span>
+    <span class="category-tile__hint">Not received, wrong amount, UPI issue</span>
+  </a>
+  <a href="/member/raise/Profile%20change" class="category-tile">
+    {{ icon('profile', 24) }}
+    <span class="category-tile__name">Profile Change</span>
+    <span class="category-tile__hint">Name, city, date of birth, UPI ID</span>
+  </a>
+  <a href="/member/raise/Survey%20issue" class="category-tile">
+    {{ icon('link', 24) }}
+    <span class="category-tile__name">Survey Issue</span>
+    <span class="category-tile__hint">Broken link, survey not loading</span>
+  </a>
+  <a href="/member/raise/Eligibility" class="category-tile">
+    {{ icon('help', 24) }}
+    <span class="category-tile__name">Eligibility</span>
+    <span class="category-tile__hint">Why am I not eligible for a project?</span>
+  </a>
+  <a href="/member/raise/Other" class="category-tile">
+    {{ icon('more', 24) }}
+    <span class="category-tile__name">Other</span>
+    <span class="category-tile__hint">Any other query</span>
+  </a>
+</div>
+{% endblock %}
