@@ -93,7 +93,7 @@
   <!-- Thread -->
   <div class="thread">
     {% for msg in messages %}
-    <div class="thread-msg {% if msg.author.role in ('agent','head') %}thread-msg--agent{% endif %}">
+    <div class="thread-msg {% if msg.author and msg.author.role in ('agent','head') %}thread-msg--agent{% endif %}">
       <div class="thread-msg__meta">
         <span class="thread-msg__author">{{ msg.author.name if msg.author else 'System' }}</span>
         <span class="thread-msg__role">{{ msg.author.role if msg.author else 'system' }}</span>

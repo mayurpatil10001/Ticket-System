@@ -828,3 +828,16 @@
   gap: var(--s3);
   flex-wrap: wrap;
 }
+
+/* ===================== NOTIFICATION ITEMS ===================== */
+.notif-item {
+  border-bottom: 1px solid var(--hairline);
+  transition: background var(--dur) var(--ease);
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item--unread {
+  background: var(--brand-wash);
+  border-left: var(--rule) solid var(--brand);
+  padding-left: calc(var(--s5) - var(--rule));
+}
+
