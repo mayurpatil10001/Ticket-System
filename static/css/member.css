@@ -1,0 +1,45 @@
+/* Member layout */
+.layout-member { background: var(--paper); padding-bottom: 72px; }
+
+.member-topbar {
+  position: sticky;
+  top: 0;
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s5);
+  z-index: 50;
+}
+
+.member-content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--s5) var(--s5) var(--s7);
+}
+
+/* Filter tabs */
+.tab-row {
+  display: flex;
+  gap: var(--s5);
+  margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab-link {
+  font-size: var(--step-0);
+  font-weight: 500;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding-bottom: var(--s3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-link.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--brand);
+}
