@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import (
     Boolean,
@@ -76,10 +76,10 @@ class Ticket(Base):
     # Relationships
     member: Mapped["User"] = relationship("User", foreign_keys=[member_id], back_populates="owned_tickets")  # type: ignore
     assignee: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assignee_id], back_populates="assigned_tickets")  # type: ignore
-    messages: Mapped[list] = relationship("TicketMessage", back_populates="ticket", lazy="select", order_by="TicketMessage.created_at")
-    events: Mapped[list] = relationship("TicketEvent", back_populates="ticket", lazy="select", order_by="TicketEvent.created_at")
-    notifications: Mapped[list] = relationship("Notification", back_populates="ticket", lazy="select")
-    internal_tickets: Mapped[list] = relationship("InternalTicket", back_populates="parent_ticket", lazy="select")
+    messages: Mapped[List["TicketMessage"]] = relationship("TicketMessage", back_populates="ticket", lazy="select", order_by="TicketMessage.created_at", uselist=True)  # type: ignore
+    events: Mapped[List["TicketEvent"]] = relationship("TicketEvent", back_populates="ticket", lazy="select", order_by="TicketEvent.created_at", uselist=True)  # type: ignore
+    notifications: Mapped[List["Notification"]] = relationship("Notification", back_populates="ticket", lazy="select", uselist=True)  # type: ignore
+    internal_tickets: Mapped[List["InternalTicket"]] = relationship("InternalTicket", back_populates="parent_ticket", lazy="select", uselist=True)  # type: ignore
 
     def __repr__(self) -> str:
         return f"<Ticket {self.public_id} status={self.status}>"
