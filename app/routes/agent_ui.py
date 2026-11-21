@@ -20,6 +20,7 @@ from app.services.ticket_service import (
     get_ticket_or_404,
     request_info,
     resolve_ticket,
+    apply_profile_change,
 )
 
 router = APIRouter(prefix="/agent", tags=["agent-ui"])
@@ -175,4 +176,12 @@ async def agent_priority(public_id: str, request: Request, db: Session = Depends
     priority = str(form.get("priority", ""))
     reason = str(form.get("reason", "")).strip()
     change_priority(db, ticket=ticket, new_priority=priority, reason=reason, actor=user)
+    return RedirectResponse(url=f"/agent/queue?ticket={public_id}", status_code=303)
+
+
+@router.post("/tickets/{public_id}/apply-profile-change", response_class=HTMLResponse)
+async def agent_apply_profile(public_id: str, request: Request, db: Session = Depends(get_db)):
+    user = _require_agent(request, db)
+    ticket = get_ticket_or_404(db, public_id, user)
+    apply_profile_change(db, ticket=ticket, actor=user)
     return RedirectResponse(url=f"/agent/queue?ticket={public_id}", status_code=303)
