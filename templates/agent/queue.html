@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% from "components/macros.html" import status_marker, priority_ticks, tat_meter, ticket_id, icon %}
+{% block title %}Queue — Concave Insights Support{% endblock %}
+{% block body_class %}layout-agent{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/agent.css">
+{% endblock %}
+
+{% block body %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- Left Rail -->
+<nav class="left-rail" aria-label="Agent navigation">
+  <a href="/" class="wordmark" style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:.75rem;letter-spacing:.12em;padding:var(--s3) 0;">CI</a>
+  <a href="/agent/queue" class="rail-item {% if request.url.path == '/agent/queue' %}active{% endif %}" title="Queue">
+    {{ icon('list', 20) }}
+    <span>Queue</span>
+  </a>
+  <a href="/member/notifications" class="rail-item" title="Notifications" style="position:relative;">
+    {{ icon('bell', 20) }}
+    {% if unread_count and unread_count > 0 %}
+    <span class="notif-badge" style="position:absolute;top:4px;right:4px;">{{ unread_count }}</span>
+    {% endif %}
+    <span>Alerts</span>
+  </a>
+  <div style="flex:1;"></div>
+  <form method="post" action="/logout" style="width:100%;display:flex;justify-content:center;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="rail-item" title="Log out" style="background:none;border:none;cursor:pointer;width:100%;">
+      {{ icon('user', 20) }}
+      <span>Out</span>
+    </button>
+  </form>
+</nav>
+
+<div class="agent-main">
+  <!-- Queue Pane -->
+  <div class="queue-pane">
+    <!-- Filter bar -->
+    <form class="filter-bar" method="get" action="/agent/queue" id="filter-form">
+      <input type="text" id="queue-search" name="q" class="search-input" placeholder="Search… (/)" value="{{ filters.q or '' }}" autocomplete="off">
+      <select name="status" class="filter-select" onchange="this.form.submit()">
+        <option value="">All status</option>
+        {% for s in ['Open','In Progress','Escalated','Reopened','Resolved'] %}
+        <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <select name="priority" class="filter-select" onchange="this.form.submit()">
+        <option value="">All priority</option>
+        {% for p in ['High','Medium','Low'] %}
+        <option value="{{ p }}" {% if filters.priority == p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+      <select name="assignee" class="filter-select" onchange="this.form.submit()">
+        <option value="all" {% if filters.assignee == 'all' %}selected{% endif %}>All</option>
+        <option value="me" {% if filters.assignee == 'me' %}selected{% endif %}>Mine</option>
+        <option value="unassigned" {% if filters.assignee == 'unassigned' %}selected{% endif %}>Unassigned</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:var(--s2);font-size:var(--step--1);cursor:pointer;">
+        <input type="checkbox" name="overdue" value="1" {% if filters.overdue %}checked{% endif %} onchange="this.form.submit()">
+        Overdue
+      </label>
+      <input type="hidden" name="ticket" value="{{ selected_ticket.public_id if selected_ticket else '' }}">
+    </form>
+
+    <!-- Ticket list -->
+    <div class="queue-list" role="list" aria-label="Tickets">
+      {% if tickets %}
+      {% for t in tickets %}
+      <a href="/agent/queue?ticket={{ t.public_id }}&{{ 'status=' + (filters.status or '') }}&assignee={{ filters.assignee or 'all' }}&q={{ filters.q or '' }}"
+         class="ticket-row {% if selected_ticket and selected_ticket.public_id == t.public_id %}selected{% endif %}"
+         role="listitem">
+        <span class="ticket-row__id">{{ ticket_id(t.public_id) }}</span>
+        <span class="ticket-row__subject">{{ t.subject }}</span>
+        {{ status_marker(t.status) }}
+        {{ priority_ticks(t.priority) }}
+      </a>
+      {% endfor %}
+      {% else %}
+      <div class="empty-state">
+        <p class="empty-state__text">No tickets match. Clear a filter or check Unassigned.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Detail Pane -->
+  <div class="detail-pane {% if selected_ticket %}show{% endif %}">
+    {% if selected_ticket %}
+    {% set t = selected_ticket %}
+    <div class="detail-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s4);">
+        <div>
+          <div class="page-kicker">{{ t.category | upper }} / {{ ticket_id(t.public_id) }}</div>
+          <h2 style="font-family:var(--font-head);font-weight:800;font-size:var(--step-2);letter-spacing:-.02em;margin-top:var(--s1);">{{ t.subject }}</h2>
+          <div style="display:flex;align-items:center;gap:var(--s4);margin-top:var(--s3);flex-wrap:wrap;">
+            {{ status_marker(t.status) }}
+            {{ priority_ticks(t.priority) }}
+            {% if t.assignee %}
+            <span style="font-size:var(--step--1);color:var(--ink-2);">Assigned: <strong>{{ t.assignee.name }}</strong></span>
+            {% else %}
+            <span style="font-size:var(--step--1);color:var(--amber);">Unassigned</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--s3);flex-wrap:wrap;align-items:flex-start;">
+          <!-- Assign -->
+          <form method="post" action="/agent/tickets/{{ t.public_id }}/assign" style="display:flex;gap:var(--s2);">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if user.role == 'head' %}
+            <select name="assignee_id" class="filter-select">
+              {% for ag in agents %}
+              <option value="{{ ag.id }}" {% if t.assignee_id == ag.id %}selected{% endif %}>{{ ag.name }}</option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <input type="hidden" name="assignee_id" value="{{ user.id }}">
+            {% endif %}
+            <button type="submit" class="btn btn-secondary btn-sm">Assign{% if user.role == 'agent' %} to me{% endif %}</button>
+          </form>
+
+          <!-- Priority change -->
+          <details style="position:relative;">
+            <summary class="btn btn-secondary btn-sm" style="cursor:pointer;list-style:none;">Priority</summary>
+            <div style="position:absolute;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius);padding:var(--s4);z-index:50;width:280px;">
+              <form method="post" action="/agent/tickets/{{ t.public_id }}/priority" style="display:flex;flex-direction:column;gap:var(--s3);">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <div class="field" style="margin:0;">
+                  <label for="new-priority">New priority</label>
+                  <select id="new-priority" name="priority" class="filter-select" style="width:100%;">
+                    {% for p in ['High','Medium','Low'] %}
+                    <option value="{{ p }}" {% if t.priority == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="field" style="margin:0;">
+                  <label for="priority-reason">Reason (required)</label>
+                  <input type="text" id="priority-reason" name="reason" placeholder="At least 5 characters" required minlength="5">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+              </form>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      {% if tat %}
+      <div style="margin-top:var(--s4);max-width:400px;">
+        {{ tat_meter(tat, t.tat_minutes_snapshot) }}
+      </div>
+      {% endif %}
+
+      <!-- Member info -->
+      {% if t.member %}
+      <div style="margin-top:var(--s4);padding:var(--s3) var(--s4);background:var(--paper);border-radius:var(--radius);font-size:var(--step--1);display:flex;gap:var(--s5);flex-wrap:wrap;">
+        <span><strong>Member:</strong> {{ t.member.name }}</span>
+        <span><strong>Phone:</strong> {{ t.member.phone }}</span>
+        {% if t.member.upi_id %}
+        <span><strong>UPI:</strong>
+          <span id="upi-masked">{{ t.member.upi_id[:2] }}***@{{ t.member.upi_id.split('@')[1] if '@' in t.member.upi_id else '...' }}</span>
+          <button type="button" onclick="document.getElementById('upi-masked').textContent='{{ t.member.upi_id }}';this.style.display='none'" style="font-size:.6875rem;text-decoration:underline;background:none;border:none;cursor:pointer;color:var(--ink-2);">reveal</button>
+        </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if t.category == 'Profile change' and t.requested_field %}
+      <div style="margin-top:var(--s4);padding:var(--s4);border:1px solid var(--hairline);border-radius:var(--radius);">
+        <div style="font-size:var(--step--1);color:var(--ink-2);font-weight:600;margin-bottom:var(--s2);">PROFILE CHANGE REQUEST</div>
+        <div style="font-size:var(--step-0);">Field: <strong>{{ t.requested_field }}</strong> → <strong>{{ t.requested_value }}</strong></div>
+        {% if t.status not in ('Closed','Resolved') %}
+        <form method="post" action="/agent/tickets/{{ t.public_id }}/apply-profile-change" style="margin-top:var(--s3);">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn-secondary btn-sm">Mark as applied to profile</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'conv')" id="tab-conv">Conversation</button>
+      <button class="tab-btn" onclick="switchTab(this,'history')" id="tab-history">History</button>
+      <button class="tab-btn" onclick="switchTab(this,'internal')" id="tab-internal">Internal</button>
+    </div>
+
+    <div class="detail-scroll">
+      <!-- Conversation tab -->
+      <div id="pane-conv">
+        <div class="thread">
+          {% set visible = messages | rejectattr('is_internal_note') | list %}
+          {% for msg in visible %}
+          <div class="thread-msg {% if msg.author and msg.author.role in ('agent','head') %}thread-msg--agent{% endif %}">
+            <div class="thread-msg__meta">
+              <span class="thread-msg__author">{{ msg.author.name if msg.author else 'System' }}</span>
+              <span class="thread-msg__role">{{ msg.author.role if msg.author else 'system' }}</span>
+              <span class="thread-msg__time">{{ msg.created_at | ist }}</span>
+            </div>
+            <div class="thread-msg__body">{{ msg.body }}</div>
+          </div>
+          {% endfor %}
+          {% if not visible %}
+          <div style="color:var(--ink-3);font-size:var(--step--1);padding:var(--s5) 0;">No messages yet.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- History tab -->
+      <div id="pane-history" style="display:none;">
+        {% for ev in events %}
+        <div class="thread-event">
+          <span class="thread-event__text">— {{ ev.created_at | ist }} / {{ ev.actor.name if ev.actor else 'System' }} / {{ ev.event_type | replace('_',' ') }}{% if ev.from_value and ev.to_value %}: {{ ev.from_value }} → {{ ev.to_value }}{% endif %}{% if ev.reason %} ({{ ev.reason }}){% endif %}</span>
+        </div>
+        {% endfor %}
+        {% if not events %}
+        <div style="color:var(--ink-3);font-size:var(--step--1);padding:var(--s5) 0;">No events yet.</div>
+        {% endif %}
+      </div>
+
+      <!-- Internal Notes tab -->
+      <div id="pane-internal" style="display:none;">
+        {% set internal = messages | selectattr('is_internal_note') | list %}
+        {% for msg in internal %}
+        <div class="thread-msg thread-msg--internal">
+          <div class="internal-label">INTERNAL / not visible to member</div>
+          <div class="thread-msg__meta">
+            <span class="thread-msg__author">{{ msg.author.name if msg.author else 'System' }}</span>
+            <span class="thread-msg__time">{{ msg.created_at | ist }}</span>
+          </div>
+          <div class="thread-msg__body">{{ msg.body }}</div>
+        </div>
+        {% endfor %}
+        {% if not internal %}
+        <div class="empty-state" style="padding:var(--s6) 0;">
+          <p class="empty-state__text">No internal notes on this ticket.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Composer -->
+    {% if t.status not in ('Closed',) %}
+    <div class="composer" id="composer-form">
+      <!-- Saved replies picker -->
+      <div id="saved-reply-picker" style="display:none;border:1px solid var(--hairline);border-radius:var(--radius);background:var(--surface);padding:var(--s3);max-height:200px;overflow-y:auto;">
+        <div style="font-size:var(--step--1);color:var(--ink-3);margin-bottom:var(--s2);">Saved replies — click to insert</div>
+        {% for sr in saved_replies %}
+        <button type="button" class="btn-tertiary" data-reply-body="{{ sr.body }}" style="display:block;text-align:left;margin-bottom:var(--s2);">{{ sr.title }}</button>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="/agent/tickets/{{ t.public_id }}/reply" style="display:flex;flex-direction:column;gap:var(--s3);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="is_internal_note" id="is-internal-note-flag" value="0">
+        <div class="field" style="margin:0;">
+          <label for="composer-body" class="sr-only">Reply</label>
+          <textarea id="composer-body" name="body"
+            data-maxlength="2000"
+            placeholder="Write your reply… (type / for saved replies)"
+            rows="4"></textarea>
+          <div id="composer-body-counter" class="char-counter"></div>
+        </div>
+        <div class="composer__actions">
+          <button type="submit" name="action" value="reply" class="btn btn-primary btn-sm">Reply</button>
+          {% if t.status in ('In Progress','Open','Reopened','Escalated') %}
+          <button type="submit" name="action" value="reply_resolve" class="btn btn-secondary btn-sm">Reply and resolve</button>
+          <button type="submit" name="action" value="request_info" class="btn btn-warn btn-sm">Request info (pauses clock)</button>
+          {% endif %}
+          <label style="display:flex;align-items:center;gap:var(--s2);font-size:var(--step--1);cursor:pointer;margin-left:auto;">
+            <input type="checkbox" id="internal-note-toggle"> Internal note
+          </label>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- No ticket selected -->
+    <div class="empty-state" style="height:100%;justify-content:center;">
+      <p class="empty-state__text">Select a ticket from the queue to view it.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function switchTab(btn, pane) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('[id^="pane-"]').forEach(p => p.style.display = 'none');
+  btn.classList.add('active');
+  document.getElementById('pane-' + pane).style.display = 'block';
+}
+</script>
+
+{% block extra_js %}
+<script src="/static/js/tat-live.js" defer></script>
+<script src="/static/js/composer.js" defer></script>
+<script src="/static/js/queue-shortcuts.js" defer></script>
+{% endblock %}
+{% endblock %}
