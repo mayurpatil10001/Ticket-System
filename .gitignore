@@ -40,3 +40,6 @@ Thumbs.db
 
 # Alembic
 alembic/
+
+# Local scratch / dev scripts
+scratch/
