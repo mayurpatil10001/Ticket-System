@@ -1,0 +1,17 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+sqlalchemy==2.0.36
+alembic==1.14.0
+pydantic==2.10.2
+pydantic-settings==2.6.1
+starlette==0.41.3
+itsdangerous==2.2.0
+apscheduler==3.10.4
+jinja2==3.1.4
+python-multipart==0.0.12
+nh3==0.2.18
+pytest==8.3.4
+pytest-asyncio==0.24.0
+httpx==0.28.0
+coverage==7.6.8
+tzdata
