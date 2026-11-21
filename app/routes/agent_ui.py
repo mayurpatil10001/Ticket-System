@@ -144,16 +144,16 @@ async def agent_reply(public_id: str, request: Request, db: Session = Depends(ge
     action = str(form.get("action", "reply"))
 
     if body:
-        add_message(db, ticket=ticket, author=user, body=body, is_internal_note=is_note)
-
-    if action == "reply_resolve" and body:
-        try:
-            resolve_ticket(db, ticket=ticket, message=body, actor=user)
-        except Exception:
-            pass
-    elif action == "request_info":
-        if body:
+        if action == "reply_resolve":
+            # resolve_ticket adds the message internally — don't double-add
+            try:
+                resolve_ticket(db, ticket=ticket, message=body, actor=user)
+            except Exception:
+                pass
+        elif action == "request_info":
             request_info(db, ticket=ticket, message=body, actor=user)
+        else:
+            add_message(db, ticket=ticket, author=user, body=body, is_internal_note=is_note)
 
     return RedirectResponse(url=f"/agent/queue?ticket={public_id}", status_code=303)
 
