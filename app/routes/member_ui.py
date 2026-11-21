@@ -20,6 +20,7 @@ from app.services.ticket_service import (
     get_ticket_or_404,
     reopen_ticket,
 )
+from app.models.notification import Notification
 
 router = APIRouter(prefix="/member", tags=["member-ui"])
 
@@ -246,3 +247,49 @@ async def member_profile(request: Request, db: Session = Depends(get_db)):
 
     user = _require_member(request, db)
     return render(request, "member/profile.html", {"user": user})
+
+
+@router.get("/notifications", response_class=HTMLResponse)
+async def member_notifications(request: Request, db: Session = Depends(get_db)):
+    from app.main import render
+
+    user = _require_member(request, db)
+    notifs = (
+        db.query(Notification)
+        .filter(Notification.user_id == user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    # Build a map of notification.ticket_id -> public_id for linking
+    from app.models.ticket import Ticket
+    tid_map = {}
+    for n in notifs:
+        if n.ticket_id and n.ticket_id not in tid_map:
+            t = db.get(Ticket, n.ticket_id)
+            if t:
+                tid_map[n.ticket_id] = t.public_id
+    # Mark all as read
+    unread = [n for n in notifs if not n.read_at]
+    if unread:
+        from app.core.clock import clock
+        now = clock.now()
+        for n in unread:
+            n.read_at = now
+        db.commit()
+    return render(request, "member/notifications.html", {
+        "user": user,
+        "notifications": notifs,
+        "notifications_ticket_ids": tid_map,
+    })
+
+
+@router.post("/notifications/{notif_id}/read", response_class=HTMLResponse)
+async def member_notif_read(notif_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_member(request, db)
+    n = db.get(Notification, notif_id)
+    if n and n.user_id == user.id and not n.read_at:
+        from app.core.clock import clock
+        n.read_at = clock.now()
+        db.commit()
+    return RedirectResponse(url="/member/notifications", status_code=303)

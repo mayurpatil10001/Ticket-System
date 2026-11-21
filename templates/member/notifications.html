@@ -1,0 +1,47 @@
+{% extends "base_member.html" %}
+{% from "components/macros.html" import icon %}
+{% block title %}Notifications — Concave Insights Support{% endblock %}
+{% set active_nav = 'tickets' %}
+
+{% block member_content %}
+<div class="page-kicker">ALERTS / {{ notifications | length }} UNREAD</div>
+<h1 class="page-title">Notifications</h1>
+<div class="page-title-rule"></div>
+
+{% if notifications %}
+<div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--hairline);border-radius:var(--radius);background:var(--surface);">
+  {% for n in notifications %}
+  <div class="notif-item {% if not n.read_at %}notif-item--unread{% endif %}" style="padding:var(--s4) var(--s5);border-bottom:1px solid var(--hairline);">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s3);">
+      <p style="margin:0;font-size:var(--step-0);line-height:1.5;">{{ n.body }}</p>
+      {% if not n.read_at %}
+      <form method="post" action="/member/notifications/{{ n.id }}/read" style="flex-shrink:0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-secondary" style="font-size:var(--step--1);padding:var(--s1) var(--s3);">Mark read</button>
+      </form>
+      {% endif %}
+    </div>
+    <div style="margin-top:var(--s2);font-size:var(--step--1);color:var(--ink-3);font-family:var(--font-mono);">
+      {{ n.created_at | ist }}
+      {% if n.ticket_id %}
+      · <a href="/member/tickets/{{ notifications_ticket_ids.get(n.ticket_id, '') }}" style="color:var(--ink-2);">View ticket</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if notifications %}
+<form method="post" action="/member/notifications/read-all" style="margin-top:var(--s5);">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button type="submit" class="btn btn-secondary">Mark all as read</button>
+</form>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">No notifications yet. We'll alert you when your ticket status changes.</p>
+  <a href="/member/tickets" class="btn btn-secondary">Back to tickets</a>
+</div>
+{% endif %}
+{% endblock %}
