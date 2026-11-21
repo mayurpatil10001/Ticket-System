@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Login — Concave Insights Support{% endblock %}
+{% block body_class %}layout-login{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s7) var(--s5);
+  background: var(--paper);
+}
+.login-box {
+  width: 100%;
+  max-width: 520px;
+}
+.persona-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--surface);
+  transition: background var(--dur) var(--ease);
+}
+.persona-row:first-of-type { border-top: 1px solid var(--hairline); }
+.persona-row:hover { background: var(--paper); }
+.persona-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--hairline);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-weight: 800; font-size: var(--step-0);
+  color: var(--ink-2);
+  flex-shrink: 0;
+}
+.persona-info { flex: 1; }
+.persona-name { font-weight: 600; font-size: var(--step-0); }
+.persona-role {
+  font-family: var(--font-mono); font-size: var(--step--1);
+  color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em;
+}
+.persona-desc { font-size: var(--step--1); color: var(--ink-2); margin-top: 2px; }
+.role-group-label {
+  font-family: var(--font-mono); font-size: var(--step--1);
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-3); padding: var(--s4) var(--s5) var(--s2);
+}
+.dev-note {
+  margin-top: var(--s5);
+  padding: var(--s3) var(--s4);
+  border-left: var(--rule) solid var(--hairline-strong);
+  font-size: var(--step--1); color: var(--ink-3);
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="page-kicker">Assessment Demo</div>
+    <h1 class="page-title">Choose a Demo Persona</h1>
+    <div class="page-title-rule"></div>
+
+    {% if error %}
+    <div class="alert-banner" style="margin-bottom: var(--s4);">{{ error }}</div>
+    {% endif %}
+
+    {% set roles = ['head', 'agent', 'member'] %}
+    {% for role in roles %}
+      {% set role_users = users | selectattr('role', 'equalto', role) | list %}
+      {% if role_users %}
+      <div class="role-group-label">{{ role | upper }}</div>
+      {% for user in role_users %}
+      <form method="post" action="/login" style="margin:0">
+        <input type="hidden" name="user_id" value="{{ user.id }}">
+        <button type="submit" class="persona-row" style="width:100%;border:none;text-align:left;">
+          <div class="persona-avatar">{{ user.name[0] }}{{ user.name.split(' ')[1][0] if user.name.split(' ') | length > 1 else '' }}</div>
+          <div class="persona-info">
+            <div class="persona-name">{{ user.name }}</div>
+            <div class="persona-role">{{ user.role }}</div>
+            <div class="persona-desc">
+              {% if role == 'head' %}Full access — escalation inbox, settings, agent load
+              {% elif role == 'agent' %}Queue view, ticket management, internal notes
+              {% else %}{{ user.city or 'Mumbai' }} &middot; {{ user.email }}
+              {% endif %}
+            </div>
+          </div>
+        </button>
+      </form>
+      {% endfor %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="dev-note">
+      Login is mocked for this assessment. No passwords. Click any persona to sign in.
+    </div>
+  </div>
+</div>
+{% endblock %}

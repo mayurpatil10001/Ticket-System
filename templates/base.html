@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Concave Insights Support{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  {% block extra_css %}{% endblock %}
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block body %}{% endblock %}
+
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+  <script src="/static/js/csrf.js" defer></script>
+  <script src="/static/js/toast.js" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

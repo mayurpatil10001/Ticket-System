@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}403 — Forbidden{% endblock %}
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:var(--s7) var(--s5);">
+  <div style="max-width:400px;">
+    <div class="page-kicker">Error 403</div>
+    <h1 class="page-title">Forbidden</h1>
+    <div class="page-title-rule"></div>
+    <p style="color:var(--ink-2);margin-bottom:var(--s6);">{{ message or "You do not have permission to access this page." }}</p>
+    <a href="/login" class="btn btn-secondary">Log in as another user</a>
+  </div>
+</div>
+{% endblock %}

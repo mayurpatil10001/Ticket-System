@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "components/macros.html" import status_marker, tat_meter, ticket_id, icon %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/member.css">
+{% endblock %}
+{% block body_class %}layout-member{% endblock %}
+
+{% block body %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<header class="member-topbar">
+  <a href="/" class="wordmark">Concave Insights</a>
+  <a href="/member/notifications" class="notif-bell" aria-label="Notifications">
+    {{ icon('bell', 20) }}
+    {% if unread_count and unread_count > 0 %}
+    <span class="notif-badge">{{ unread_count }}</span>
+    {% endif %}
+  </a>
+</header>
+
+<main class="member-content">
+  {% block member_content %}{% endblock %}
+</main>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <a href="/member/tickets" class="bottom-nav__item {% if active_nav == 'tickets' %}active{% endif %}">
+    {{ icon('ticket', 20) }}
+    <span>Tickets</span>
+  </a>
+  <a href="/member/raise" class="bottom-nav__item {% if active_nav == 'raise' %}active{% endif %}">
+    {{ icon('plus', 20) }}
+    <span>Raise</span>
+  </a>
+  <a href="/member/profile" class="bottom-nav__item {% if active_nav == 'profile' %}active{% endif %}">
+    {{ icon('user', 20) }}
+    <span>Profile</span>
+  </a>
+</nav>
+
+{% block extra_js %}<script src="/static/js/tat-live.js" defer></script>{% endblock %}
+{% endblock %}
