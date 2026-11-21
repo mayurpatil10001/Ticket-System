@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% from "components/macros.html" import status_marker, priority_ticks, ticket_id, icon %}
+{% block title %}Dashboard — Concave Insights Support{% endblock %}
+{% block body_class %}layout-head{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/head.css">{% endblock %}
+
+{% block body %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<header class="head-topbar">
+  <a href="/" class="wordmark">Concave Insights</a>
+  <nav class="head-nav">
+    <a href="/head/dashboard" class="active">Dashboard</a>
+    <a href="/agent/queue">Queue</a>
+    <a href="/head/settings">Settings</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:var(--s4);">
+    <span style="font-size:var(--step--1);color:var(--ink-2);">{{ current_name }}</span>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn-tertiary" style="color:var(--ink-2);font-size:var(--step--1);">Log out</button>
+    </form>
+  </div>
+</header>
+
+{% if escalated_count and escalated_count > 0 %}
+<div class="alert-banner" style="margin:0;border-radius:0;border-left:none;border-bottom:1px solid var(--brand);">
+  {{ icon('alert', 16) }}
+  <strong>{{ escalated_count }} escalated ticket{{ 's' if escalated_count != 1 }}</strong> require attention.
+  <a href="#escalation-inbox" style="color:var(--brand);">View inbox &darr;</a>
+</div>
+{% endif %}
+
+<main class="head-content">
+  <div class="page-kicker">SUPPORT HEAD / {{ now | ist }}</div>
+  <h1 class="page-title">Dashboard</h1>
+  <div class="page-title-rule"></div>
+
+  <!-- Stats row -->
+  <div class="stat-row">
+    <div class="stat-block">
+      <div class="stat-numeral">{{ open_count }}</div>
+      <div class="stat-caption">Open</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-numeral {% if overdue_count > 0 %}alert{% endif %}">{{ overdue_count }}</div>
+      <div class="stat-caption">Overdue</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-numeral {% if escalated_count > 0 %}alert{% endif %}">{{ escalated_count }}</div>
+      <div class="stat-caption">Escalated</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-numeral">{{ resolved_today }}</div>
+      <div class="stat-caption">Resolved Today</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-numeral" style="font-size:var(--step-3);">
+        {% if avg_resolution >= 60 %}{{ avg_resolution // 60 }}h{% else %}{{ avg_resolution }}m{% endif %}
+      </div>
+      <div class="stat-caption">Avg Resolution</div>
+    </div>
+  </div>
+
+  <!-- Escalation inbox -->
+  <div id="escalation-inbox">
+    <div class="section-rule">Escalation Inbox</div>
+    {% if escalated_tickets %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Priority</th>
+          <th>Category</th>
+          <th>Assignee</th>
+          <th>Due</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in escalated_tickets %}
+        <tr>
+          <td>{{ ticket_id(t.public_id) }}</td>
+          <td>{{ t.subject }}</td>
+          <td>{{ priority_ticks(t.priority) }}</td>
+          <td style="font-size:var(--step--1);color:var(--ink-2);">{{ t.category }}</td>
+          <td style="font-size:var(--step--1);">{{ t.assignee.name if t.assignee else '—' }}</td>
+          <td style="font-family:var(--font-mono);font-size:var(--step--1);color:var(--brand);">{{ t.due_at | ist if t.due_at else '—' }}</td>
+          <td><a href="/agent/queue?ticket={{ t.public_id }}" class="btn btn-secondary btn-sm">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding:var(--s6) 0;">
+      <p class="empty-state__text">Nothing escalated. Every ticket is inside its time limit.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Tickets by category — SVG/CSS bar chart -->
+  <div class="section-rule">Tickets by Category</div>
+  {% if by_category %}
+  {% set max_count = by_category | map(attribute='count') | max %}
+  <div class="bar-chart">
+    {% for item in by_category | sort(attribute='count', reverse=True) %}
+    <div class="bar-row">
+      <div class="bar-label">{{ item.category }}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:{{ (item.count / max_count * 100) | int }}%"></div>
+      </div>
+      <div class="bar-value">{{ item.count }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color:var(--ink-3);font-size:var(--step--1);">No open tickets.</p>
+  {% endif %}
+
+  <!-- Agent load -->
+  <div class="section-rule">Agent Load</div>
+  {% if agent_load %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Open</th>
+        <th>Overdue</th>
+        <th>Avg First Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in agent_load %}
+      <tr>
+        <td style="font-weight:600;">{{ row.agent.name }}</td>
+        <td>{{ row.open }}</td>
+        <td style="{% if row.overdue > 0 %}color:var(--brand);font-weight:600;{% endif %}">{{ row.overdue }}</td>
+        <td style="font-family:var(--font-mono);font-size:var(--step--1);">
+          {% if row.avg_fr is not none %}
+            {{ row.avg_fr // 60 }}h {{ row.avg_fr % 60 }}m
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</main>
+
+{% block extra_js %}<script src="/static/js/tat-live.js" defer></script>{% endblock %}
+{% endblock %}

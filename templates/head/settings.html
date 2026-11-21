@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Settings — Concave Insights Support{% endblock %}
+{% block body_class %}layout-head{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/head.css">{% endblock %}
+
+{% block body %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<header class="head-topbar">
+  <a href="/" class="wordmark">Concave Insights</a>
+  <nav class="head-nav">
+    <a href="/head/dashboard">Dashboard</a>
+    <a href="/agent/queue">Queue</a>
+    <a href="/head/settings" class="active">Settings</a>
+  </nav>
+  <form method="post" action="/logout">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn-tertiary" style="color:var(--ink-2);font-size:var(--step--1);">Log out</button>
+  </form>
+</header>
+
+<main class="head-content">
+  <div class="page-kicker">SETTINGS</div>
+  <h1 class="page-title">Settings</h1>
+  <div class="page-title-rule"></div>
+
+  {% if request.query_params.get('saved') %}
+  <div id="auto-toast" data-message="Settings saved." data-type="success"></div>
+  {% endif %}
+
+  <!-- TAT per priority -->
+  <div class="section-rule">TAT per Priority (working minutes)</div>
+  <form method="post" action="/head/settings/tat_minutes" style="display:flex;flex-direction:column;gap:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div style="display:flex;gap:var(--s5);flex-wrap:wrap;">
+      {% for priority in ['High','Medium','Low'] %}
+      <div class="field" style="width:140px;">
+        <label>{{ priority }}</label>
+        <input type="number" name="tat_{{ priority }}" value="{{ settings.tat_minutes[priority] }}" min="1" required>
+        <div class="helper">minutes</div>
+      </div>
+      {% endfor %}
+    </div>
+    <input type="hidden" name="value" id="tat-minutes-value">
+    <button type="submit" class="btn btn-primary btn-sm" onclick="
+      document.getElementById('tat-minutes-value').value=JSON.stringify({High:parseInt(document.querySelector('[name=tat_High]').value),Medium:parseInt(document.querySelector('[name=tat_Medium]').value),Low:parseInt(document.querySelector('[name=tat_Low]').value)});
+    ">Save TAT settings</button>
+  </form>
+
+  <!-- Working hours -->
+  <div class="section-rule">Working Hours</div>
+  <form method="post" action="/head/settings/working_hours" style="display:flex;flex-direction:column;gap:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div style="display:flex;gap:var(--s5);flex-wrap:wrap;">
+      <div class="field" style="width:140px;">
+        <label>Start time (IST)</label>
+        <input type="time" name="start" value="{{ settings.working_hours.start }}">
+      </div>
+      <div class="field" style="width:140px;">
+        <label>End time (IST)</label>
+        <input type="time" name="end" value="{{ settings.working_hours.end }}">
+      </div>
+    </div>
+    <div class="helper">Working days: Mon–Sat (configurable via API). Sunday is always off by default.</div>
+    <input type="hidden" name="value" id="wh-value">
+    <button type="submit" class="btn btn-primary btn-sm" onclick="
+      document.getElementById('wh-value').value=JSON.stringify({days:[0,1,2,3,4,5],start:document.querySelector('[name=start]').value,end:document.querySelector('[name=end]').value,tz:'Asia/Kolkata'});
+    ">Save working hours</button>
+  </form>
+
+  <!-- Reopen rules -->
+  <div class="section-rule">Reopen Rules</div>
+  <form method="post" action="/head/settings/reopen_window_days" style="display:flex;flex-direction:column;gap:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div style="display:flex;gap:var(--s5);flex-wrap:wrap;">
+      <div class="field" style="width:160px;">
+        <label>Reopen window</label>
+        <input type="number" name="value" value="{{ settings.reopen_window_days }}" min="1" max="30">
+        <div class="helper">days after resolution</div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Save reopen window</button>
+  </form>
+  <form method="post" action="/head/settings/max_reopens" style="display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field" style="width:160px;">
+      <label>Max reopens per ticket</label>
+      <input type="number" name="value" value="{{ settings.max_reopens }}" min="1" max="10">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Save max reopens</button>
+  </form>
+
+  <!-- Auto-resolve / auto-close -->
+  <div class="section-rule">Auto-resolve and Auto-close</div>
+  <form method="post" action="/head/settings/awaiting_member_auto_resolve_days" style="display:flex;flex-direction:column;gap:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field" style="width:200px;">
+      <label>Auto-resolve after awaiting reply</label>
+      <input type="number" name="value" value="{{ settings.awaiting_member_auto_resolve_days }}" min="1" max="30">
+      <div class="helper">days with no member reply</div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+  </form>
+  <form method="post" action="/head/settings/auto_close_days" style="display:flex;flex-direction:column;gap:var(--s4);margin-top:var(--s4);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field" style="width:200px;">
+      <label>Auto-close resolved tickets after</label>
+      <input type="number" name="value" value="{{ settings.auto_close_days }}" min="1" max="30">
+      <div class="helper">days with no member action</div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+  </form>
+
+  <div class="alert-banner--amber" style="margin-top:var(--s5);">
+    Changes apply to new tickets. Existing tickets keep their due time unless you recalculate.
+    <form method="post" action="/api/settings/recalculate-open-tickets" style="display:inline;margin-left:var(--s4);">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="btn btn-secondary btn-sm">Recalculate open tickets</button>
+    </form>
+  </div>
+
+  <!-- Saved replies -->
+  <div class="section-rule">Saved Replies</div>
+  <form method="post" action="/head/saved-replies/create" style="display:flex;flex-direction:column;gap:var(--s4);margin-bottom:var(--s6);">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div style="display:flex;gap:var(--s4);flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:200px;">
+        <label>Title</label>
+        <input type="text" name="title" placeholder="e.g. Payment timeline" required maxlength="200">
+      </div>
+      <div class="field" style="width:160px;">
+        <label>Category (optional)</label>
+        <select name="category" class="filter-select" style="height:48px;">
+          <option value="">All categories</option>
+          {% for c in ['Payment','Profile change','Survey issue','Eligibility','Other'] %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Reply body</label>
+      <textarea name="body" rows="4" placeholder="Write the saved reply text…" required maxlength="2000"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start;">Add saved reply</button>
+  </form>
+
+  {% if saved_replies %}
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Category</th><th>Preview</th><th></th></tr></thead>
+    <tbody>
+      {% for sr in saved_replies %}
+      <tr>
+        <td style="font-weight:600;">{{ sr.title }}</td>
+        <td style="font-size:var(--step--1);color:var(--ink-2);">{{ sr.category or 'All' }}</td>
+        <td style="font-size:var(--step--1);color:var(--ink-2);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ sr.body[:80] }}…</td>
+        <td>
+          <form method="post" action="/head/saved-replies/{{ sr.id }}/delete" onsubmit="return confirm('Delete this saved reply?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn-tertiary" style="color:var(--brand);font-size:var(--step--1);">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--ink-3);font-size:var(--step--1);">No saved replies yet.</p>
+  {% endif %}
+</main>
+
+{% block extra_js %}<script src="/static/js/toast.js" defer></script>{% endblock %}
+{% endblock %}
