@@ -1,105 +1,255 @@
 {% extends "base.html" %}
-{% block title %}Login — Concave Insights Support{% endblock %}
+{% block title %}Demo Login — Concave Insights Support{% endblock %}
 {% block body_class %}layout-login{% endblock %}
 
 {% block extra_css %}
 <style>
+/* ── Page shell ───────────────────────────────────────── */
 .login-wrap {
   min-height: 100vh;
+  background: var(--paper);
+  display: grid;
+  grid-template-columns: 1fr;
+  place-items: center;
+  padding: var(--s6) var(--s5) var(--s8);
+}
+
+/* ── Brand bar ───────────────────────────────────────── */
+.login-brand {
+  text-align: center;
+  margin-bottom: var(--s6);
+}
+.login-wordmark {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: var(--step-2);
+  letter-spacing: -.03em;
+  color: var(--brand);
+  text-transform: uppercase;
+  text-decoration: none;
+  display: inline-block;
+}
+.login-sub {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  margin-top: var(--s1);
+  letter-spacing: .04em;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+/* ── Main card ───────────────────────────────────────── */
+.login-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+/* ── Role section header ─────────────────────────────── */
+.role-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: var(--s7) var(--s5);
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--hairline);
   background: var(--paper);
 }
-.login-box {
-  width: 100%;
-  max-width: 520px;
+.role-header__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
-.persona-row {
+.role-header__dot--head   { background: var(--brand); }
+.role-header__dot--agent  { background: var(--slate); }
+.role-header__dot--member { background: var(--moss); }
+
+.role-header__label {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.role-header__desc {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  margin-left: auto;
+}
+
+/* ── Persona row ─────────────────────────────────────── */
+.persona-btn {
   display: flex;
   align-items: center;
   gap: var(--s4);
+  width: 100%;
   padding: var(--s4) var(--s5);
+  border: none;
   border-bottom: 1px solid var(--hairline);
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--ink);
   background: var(--surface);
-  transition: background var(--dur) var(--ease);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.persona-row:first-of-type { border-top: 1px solid var(--hairline); }
-.persona-row:hover { background: var(--paper); }
+.persona-btn:last-of-type { border-bottom: none; }
+.persona-btn:hover { background: var(--paper); }
+.persona-btn:active { transform: translateY(1px); }
+
+/* Avatar */
 .persona-avatar {
-  width: 40px; height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--hairline);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-head); font-weight: 800; font-size: var(--step-0);
-  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: .875rem;
   flex-shrink: 0;
+  letter-spacing: -.01em;
 }
-.persona-info { flex: 1; }
-.persona-name { font-weight: 600; font-size: var(--step-0); }
-.persona-role {
-  font-family: var(--font-mono); font-size: var(--step--1);
-  color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em;
+.persona-avatar--head   { background: var(--brand-wash);  color: var(--brand); }
+.persona-avatar--agent  { background: var(--slate-wash);  color: var(--slate); }
+.persona-avatar--member { background: var(--moss-wash);   color: var(--moss);  }
+
+/* Text */
+.persona-info { flex: 1; min-width: 0; }
+.persona-name {
+  font-weight: 600;
+  font-size: var(--step-0);
+  color: var(--ink);
 }
-.persona-desc { font-size: var(--step--1); color: var(--ink-2); margin-top: 2px; }
-.role-group-label {
-  font-family: var(--font-mono); font-size: var(--step--1);
-  letter-spacing: .08em; text-transform: uppercase;
-  color: var(--ink-3); padding: var(--s4) var(--s5) var(--s2);
+.persona-meta {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.dev-note {
+
+/* Arrow */
+.persona-arrow {
+  color: var(--ink-3);
+  flex-shrink: 0;
+  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.persona-btn:hover .persona-arrow {
+  transform: translateX(3px);
+  color: var(--ink);
+}
+
+/* ── Section divider ─────────────────────────────────── */
+.role-section { border-top: 1px solid var(--hairline); }
+.role-section:first-of-type { border-top: none; }
+
+/* ── Footer note ─────────────────────────────────────── */
+.login-note {
   margin-top: var(--s5);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  text-align: center;
+  font-family: var(--font-mono);
+  letter-spacing: .02em;
+}
+
+/* ── Error banner ────────────────────────────────────── */
+.login-error {
+  margin-bottom: var(--s4);
   padding: var(--s3) var(--s4);
-  border-left: var(--rule) solid var(--hairline-strong);
-  font-size: var(--step--1); color: var(--ink-3);
+  border-left: var(--rule) solid var(--brand);
+  background: var(--brand-wash);
+  font-size: var(--step--1);
+  color: var(--brand);
+  font-family: var(--font-mono);
+}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .role-header__desc { display: none; }
+  .persona-meta      { display: none; }
 }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="login-wrap">
-  <div class="login-box">
-    <div class="page-kicker">Assessment Demo</div>
-    <h1 class="page-title">Choose a Demo Persona</h1>
-    <div class="page-title-rule"></div>
+  <div style="width:100%;max-width:560px;">
+
+    <!-- Brand -->
+    <div class="login-brand">
+      <a class="login-wordmark" href="/login">Concave Insights</a>
+      <div class="login-sub">Support Portal &mdash; Demo Login</div>
+    </div>
 
     {% if error %}
-    <div class="alert-banner" style="margin-bottom: var(--s4);">{{ error }}</div>
+    <div class="login-error">! &nbsp;{{ error }}</div>
     {% endif %}
 
-    {% set roles = ['head', 'agent', 'member'] %}
-    {% for role in roles %}
-      {% set role_users = users | selectattr('role', 'equalto', role) | list %}
-      {% if role_users %}
-      <div class="role-group-label">{{ role | upper }}</div>
-      {% for user in role_users %}
-      <form method="post" action="/login" style="margin:0">
-        <input type="hidden" name="user_id" value="{{ user.id }}">
-        <button type="submit" class="persona-row" style="width:100%;border:none;text-align:left;">
-          <div class="persona-avatar">{{ user.name[0] }}{{ user.name.split(' ')[1][0] if user.name.split(' ') | length > 1 else '' }}</div>
-          <div class="persona-info">
-            <div class="persona-name">{{ user.name }}</div>
-            <div class="persona-role">{{ user.role }}</div>
-            <div class="persona-desc">
-              {% if role == 'head' %}Full access — escalation inbox, settings, agent load
-              {% elif role == 'agent' %}Queue view, ticket management, internal notes
-              {% else %}{{ user.city or 'Mumbai' }} &middot; {{ user.email }}
-              {% endif %}
-            </div>
-          </div>
-        </button>
-      </form>
-      {% endfor %}
-      {% endif %}
-    {% endfor %}
+    <!-- Persona card -->
+    <div class="login-card">
 
-    <div class="dev-note">
-      Login is mocked for this assessment. No passwords. Click any persona to sign in.
+      {% macro initials(name) %}{{ name.split(' ')[0][0] }}{{ name.split(' ')[1][0] if name.split(' ')|length > 1 else '' }}{% endmacro %}
+
+      {% set role_meta = {
+        'head':   ('Support Head',  'Full access — dashboard, escalations, settings'),
+        'agent':  ('Support Agent', 'Queue, reply, resolve, internal notes'),
+        'member': ('Panel Member',  'Raise tickets, track status, reopen'),
+      } %}
+
+      {% for role in ['head', 'agent', 'member'] %}
+        {% set role_users = users | selectattr('role', 'equalto', role) | list %}
+        {% if role_users %}
+        <div class="role-section">
+          <div class="role-header">
+            <span class="role-header__dot role-header__dot--{{ role }}"></span>
+            <span class="role-header__label">{{ role_meta[role][0] }}</span>
+            <span class="role-header__desc">{{ role_meta[role][1] }}</span>
+          </div>
+
+          {% for user in role_users %}
+          <form method="post" action="/login" style="margin:0;">
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+            <button type="submit" class="persona-btn">
+              <div class="persona-avatar persona-avatar--{{ role }}">
+                {{ initials(user.name) }}
+              </div>
+              <div class="persona-info">
+                <div class="persona-name">{{ user.name }}</div>
+                <div class="persona-meta">
+                  {% if role == 'member' %}
+                    {{ user.city or 'Mumbai' }} &middot; {{ user.email }}
+                  {% elif role == 'agent' %}
+                    {{ user.email }}
+                  {% else %}
+                    {{ user.email }} &middot; admin access
+                  {% endif %}
+                </div>
+              </div>
+              <!-- right arrow svg -->
+              <svg class="persona-arrow" width="16" height="16" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="1.5"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </button>
+          </form>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endfor %}
+
+    </div><!-- /login-card -->
+
+    <div class="login-note">
+      No password required &mdash; click any name to sign in &mdash; Assessment demo only
     </div>
+
   </div>
 </div>
 {% endblock %}
