@@ -1,0 +1,128 @@
+erDiagram
+    users {
+        int id PK
+        string name
+        string email UK
+        string phone UK
+        string role "member|agent|head"
+        string upi_id
+        string city
+        date dob
+        bool is_active
+        datetime created_at
+    }
+
+    ticket_counter {
+        int id PK "always 1"
+        int last_number
+    }
+
+    tickets {
+        int id PK
+        string public_id UK "TKT-0001"
+        int member_id FK
+        int assignee_id FK
+        string category "Payment|Profile change|Survey issue|Eligibility|Other"
+        string priority "Low|Medium|High"
+        string status "Open|In Progress|Resolved|Closed|Reopened|Escalated"
+        string subject
+        string description
+        string survey_ref
+        string requested_field
+        string requested_value
+        int tat_minutes_snapshot
+        datetime due_at
+        datetime tat_clock_started_at
+        bool awaiting_member
+        datetime paused_at
+        int paused_seconds_working
+        bool queued_for_next_shift
+        int reopen_count
+        datetime first_response_at
+        datetime resolved_at
+        datetime closed_at
+        datetime last_member_activity_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    ticket_messages {
+        int id PK
+        int ticket_id FK
+        int author_id FK
+        string body
+        bool is_internal_note
+        datetime created_at
+    }
+
+    ticket_events {
+        int id PK
+        int ticket_id FK
+        int actor_id FK
+        string event_type
+        string from_value
+        string to_value
+        string reason "NOT NULL when type=reopened|priority_changed|escalated"
+        datetime created_at
+    }
+
+    settings {
+        string key PK
+        json value
+        int updated_by FK
+        datetime updated_at
+    }
+
+    category_priority_map {
+        string category PK
+        string priority
+    }
+
+    holidays {
+        date date PK
+        string label
+    }
+
+    saved_replies {
+        int id PK
+        string title
+        string body
+        string category
+        int created_by FK
+    }
+
+    notifications {
+        int id PK
+        int user_id FK
+        int ticket_id FK
+        string kind
+        string body
+        datetime read_at
+        datetime created_at
+    }
+
+    internal_tickets {
+        int id PK
+        int parent_ticket_id FK
+        string team "Rewards|Tech|Finance"
+        string title
+        string note
+        string status "Open|Done"
+        int created_by FK
+        int done_by FK
+        datetime created_at
+        datetime done_at
+    }
+
+    users ||--o{ tickets : "member_id"
+    users ||--o{ tickets : "assignee_id"
+    users ||--o{ ticket_messages : "author_id"
+    users ||--o{ ticket_events : "actor_id"
+    users ||--o{ notifications : "user_id"
+    users ||--o{ saved_replies : "created_by"
+    users ||--o{ internal_tickets : "created_by"
+    users ||--o{ internal_tickets : "done_by"
+    tickets ||--o{ ticket_messages : "ticket_id"
+    tickets ||--o{ ticket_events : "ticket_id"
+    tickets ||--o{ notifications : "ticket_id"
+    tickets ||--o{ internal_tickets : "parent_ticket_id"

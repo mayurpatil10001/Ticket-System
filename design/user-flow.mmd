@@ -1,0 +1,78 @@
+flowchart TD
+    %% ===================== MEMBER FLOW =====================
+    M_Login([Member logs in])
+    M_Home[My Tickets list]
+    M_Raise_1[Raise: Choose category\npayment / profile / survey /\neligibility / other]
+    M_Raise_2[Raise: Fill form\ndescription, survey ref,\nfor profile: field + new value]
+    M_Raise_Submit{Submit valid?}
+    M_Raise_Error[Show inline errors]
+    M_Success[Success screen\nTKT-XXXX created\nExpected reply by...]
+    M_Detail[Ticket detail\nthread + TAT label]
+    M_Reply[Send reply]
+    M_Confirm{Resolved — confirm?}
+    M_Close[Ticket Closed]
+    M_Reopen_Sheet[Reopen bottom sheet\nenter reason min 5 chars]
+    M_Reopen_Check{Window open\nAND reopens left?}
+    M_Reopen_Blocked[Show: raise new ticket\nreopen limit or window expired]
+    M_Reopened[Ticket Reopened\nnew TAT computed]
+
+    M_Login --> M_Home
+    M_Home --> M_Raise_1
+    M_Home --> M_Detail
+    M_Raise_1 --> M_Raise_2
+    M_Raise_2 --> M_Raise_Submit
+    M_Raise_Submit -- No --> M_Raise_Error --> M_Raise_2
+    M_Raise_Submit -- Yes --> M_Success --> M_Detail
+    M_Detail --> M_Reply --> M_Detail
+    M_Detail --> M_Confirm
+    M_Confirm -- Yes close it --> M_Close
+    M_Confirm -- No reopen --> M_Reopen_Sheet
+    M_Reopen_Sheet --> M_Reopen_Check
+    M_Reopen_Check -- Allowed --> M_Reopened --> M_Detail
+    M_Reopen_Check -- Blocked --> M_Reopen_Blocked
+
+    %% ===================== AGENT FLOW =====================
+    A_Login([Agent logs in])
+    A_Queue[Queue: filtered list\nstatus / priority / overdue / mine]
+    A_Detail[Ticket detail pane\nThread + TAT meter]
+    A_Assign[Assign to self]
+    A_Reply[Reply to member\nstatus moves to In Progress]
+    A_ReqInfo[Request info\nclock PAUSES\nawaiting_member = true]
+    A_MemberReplied{Member replies?}
+    A_AutoResolve[System auto-resolves\nafter 3 days no reply]
+    A_ResumedClock[Clock resumes\ndue_at recomputed]
+    A_Resolve[Agent resolves\nclosing message required]
+    A_PriorityChange[Change priority\nreason required\ndue_at recomputed]
+
+    A_Login --> A_Queue
+    A_Queue --> A_Detail
+    A_Detail --> A_Assign --> A_Detail
+    A_Detail --> A_Reply --> A_Detail
+    A_Detail --> A_PriorityChange --> A_Detail
+    A_Detail --> A_ReqInfo
+    A_ReqInfo --> A_MemberReplied
+    A_MemberReplied -- Yes --> A_ResumedClock --> A_Detail
+    A_MemberReplied -- No after 3d --> A_AutoResolve
+    A_Detail --> A_Resolve
+
+    %% ===================== TAT BREACH / ESCALATION =====================
+    TAT_Sweep([APScheduler sweep\nevery 60s\nalso on queue / dashboard load])
+    TAT_Query{due_at <= now\nstatus open/in-progress/reopened\nawaiting_member = false?}
+    TAT_Skip[Skip ticket]
+    TAT_Escalate[Set status = Escalated\nwrite event with reason\ncreate notification for all Heads]
+    H_Alert[Head: escalation banner\nnotification bell\nescalation inbox table]
+    H_Reassign[Head reassigns ticket\nto another agent]
+    A_PickUp[Agent picks up\nstatus = In Progress]
+
+    TAT_Sweep --> TAT_Query
+    TAT_Query -- No --> TAT_Skip
+    TAT_Query -- Yes --> TAT_Escalate --> H_Alert
+    H_Alert --> H_Reassign --> A_PickUp --> A_Detail
+
+    %% ===================== WORKING HOURS LOGIC =====================
+    WH_Submit([Ticket submitted\noutside working hours])
+    WH_Queued[queued_for_next_shift = true\nmember shown honest ETA\nMonday 1:00 PM]
+    WH_ShiftOpen([Shift opens\nMon 09:00 IST])
+    WH_ClockStart[TAT clock starts\nticket pinned to top of queue]
+
+    WH_Submit --> WH_Queued --> WH_ShiftOpen --> WH_ClockStart --> A_Queue
