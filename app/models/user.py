@@ -25,6 +25,7 @@ class User(Base):
     upi_id: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     dob: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # ISO date YYYY-MM-DD
+    password_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("1"))
     created_at: Mapped[datetime] = mapped_column(
         TZDateTime, default=lambda: datetime.now(UTC)

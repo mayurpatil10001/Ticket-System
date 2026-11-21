@@ -18,6 +18,7 @@ from app.models.saved_reply import SavedReply
 from app.models.ticket_counter import TicketCounter
 from app.models.user import User
 from app.services.settings_service import DEFAULTS, DEFAULT_CATEGORY_PRIORITY
+from app.core.password import hash_password
 import json
 
 # Create tables
@@ -120,12 +121,15 @@ def seed():
         created_users = {}
         for u in users_data:
             existing = db.query(User).filter(User.email == u["email"]).first()
+            pwd = f"{u['name'].split()[0]}@123"
+            pwd_hash = hash_password(pwd)
             if not existing:
-                user = User(created_at=now, is_active=True, **u)
+                user = User(created_at=now, is_active=True, password_hash=pwd_hash, **u)
                 db.add(user)
                 db.flush()
                 created_users[u["email"]] = user
             else:
+                existing.password_hash = pwd_hash
                 created_users[u["email"]] = existing
 
         db.flush()
@@ -309,11 +313,12 @@ def seed():
 
 def _print_login_table(db: Session):
     users = db.query(User).filter(User.is_active.is_(True)).order_by(User.role, User.name).all()
-    print(f"{'Role':<10} {'Name':<20} {'Email':<40} {'ID':<5}")
-    print("─" * 80)
+    print(f"{'Role':<10} {'Name':<20} {'Email':<36} {'Password':<15} {'ID':<5}")
+    print("─" * 90)
     for u in users:
-        print(f"{u.role:<10} {u.name:<20} {u.email:<40} {u.id:<5}")
-    print("\nOpen http://localhost:8000/login and click any persona to sign in.\n")
+        pwd = f"{u.name.split()[0]}@123"
+        print(f"{u.role:<10} {u.name:<20} {u.email:<36} {pwd:<15} {u.id:<5}")
+    print("\nOpen http://localhost:8000/login and sign in with email and password.\n")
 
 
 if __name__ == "__main__":

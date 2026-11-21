@@ -1,255 +1,562 @@
 {% extends "base.html" %}
-{% block title %}Demo Login — Concave Insights Support{% endblock %}
+{% block title %}Sign In — Concave Insights Support{% endblock %}
 {% block body_class %}layout-login{% endblock %}
 
 {% block extra_css %}
 <style>
-/* ── Page shell ───────────────────────────────────────── */
-.login-wrap {
+/* ═══════════════════════════════════════════════════════════
+   PASSWORD LOGIN — Concave Insights Support
+   ═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.layout-login {
+  margin: 0;
   min-height: 100vh;
   background: var(--paper);
+}
+
+/* ── Split Layout Shell ────────────────────────────────────── */
+.dl-wrap {
   display: grid;
-  grid-template-columns: 1fr;
-  place-items: center;
-  padding: var(--s6) var(--s5) var(--s8);
+  grid-template-columns: 410px 1fr;
+  min-height: 100vh;
+}
+@media (max-width: 860px) {
+  .dl-wrap { grid-template-columns: 1fr; }
+  .dl-panel { display: none; }
 }
 
-/* ── Brand bar ───────────────────────────────────────── */
-.login-brand {
-  text-align: center;
-  margin-bottom: var(--s6);
+/* ── Left Branding & Credentials Panel ─────────────────────── */
+.dl-panel {
+  background: var(--ink);
+  color: #fff;
+  padding: 44px 36px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
 }
-.login-wordmark {
+.dl-panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg,  transparent, transparent 59px, rgba(255,255,255,.03) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,.03) 60px);
+  pointer-events: none;
+}
+.dl-panel::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--brand);
+}
+
+.dl-logo { position: relative; z-index: 1; }
+.dl-logo-mark {
   font-family: var(--font-head);
-  font-weight: 800;
-  font-size: var(--step-2);
-  letter-spacing: -.03em;
-  color: var(--brand);
-  text-transform: uppercase;
-  text-decoration: none;
-  display: inline-block;
+  font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em;
+  color: #fff; text-transform: uppercase;
+  display: flex; align-items: center; gap: 9px;
 }
-.login-sub {
-  font-size: var(--step--1);
-  color: var(--ink-3);
-  margin-top: var(--s1);
-  letter-spacing: .04em;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
+.dl-logo-mark .dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; background: var(--brand); flex-shrink: 0;
+}
+.dl-logo-sub {
+  font-family: var(--font-mono); font-size: .68rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.45); margin-top: 5px; padding-left: 17px;
 }
 
-/* ── Main card ───────────────────────────────────────── */
-.login-card {
-  width: 100%;
-  max-width: 560px;
+.dl-panel-title {
+  font-family: var(--font-head); font-size: 1.85rem; font-weight: 800;
+  line-height: 1.15; letter-spacing: -.03em; color: #fff; margin: 32px 0 12px;
+}
+.dl-panel-title em { color: var(--brand); font-style: normal; }
+.dl-panel-desc {
+  font-size: .84rem; line-height: 1.55;
+  color: rgba(255,255,255,.55); margin: 0 0 28px;
+}
+
+/* Credentials table */
+.dl-creds-card {
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-top: auto;
+}
+.dl-creds-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.dl-creds-title {
+  font-family: var(--font-mono); font-size: .68rem;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(255,255,255,.45); font-weight: 600;
+}
+.dl-creds-rule {
+  font-family: var(--font-mono); font-size: .64rem;
+  color: var(--brand);
+}
+
+.dl-creds-table {
+  width: 100%; border-collapse: collapse; font-size: .75rem;
+}
+.dl-creds-table thead th {
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em;
+  text-transform: uppercase; color: rgba(255,255,255,.35);
+  text-align: left; padding: 0 6px 6px 0; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.dl-creds-table tbody td {
+  padding: 6px 6px 6px 0; color: rgba(255,255,255,.75); vertical-align: middle;
+}
+.dl-creds-table tbody tr:hover td { color: #fff; }
+
+.cred-role {
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .05em;
+  text-transform: uppercase; padding: 2px 5px;
+  border-radius: 2px; font-weight: 600; display: inline-block;
+}
+.cred-role--head   { background: rgba(220,38,38,.28); color: #fca5a5; }
+.cred-role--agent  { background: rgba(71,85,105,.45); color: #cbd5e1; }
+.cred-role--member { background: rgba(22,101,52,.35); color: #86efac; }
+.cred-pwd {
+  font-family: var(--font-mono); font-size: .75rem;
+  color: #fff; letter-spacing: .02em; font-weight: 500;
+}
+.cred-hint {
+  font-family: var(--font-mono); font-size: .65rem;
+  color: rgba(255,255,255,.35); margin-top: 10px; line-height: 1.4;
+}
+
+/* ── Right Login Form Panel ────────────────────────────────── */
+.dl-login {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 44px 24px; background: var(--paper);
+}
+.dl-login-inner { width: 100%; max-width: 440px; }
+
+/* Mobile logo */
+.dl-mobile-logo { display: none; text-align: center; margin-bottom: 28px; }
+@media (max-width: 860px) { .dl-mobile-logo { display: block; } }
+.dl-mobile-wordmark {
+  font-family: var(--font-head); font-weight: 800; font-size: 1.25rem;
+  letter-spacing: -.03em; color: var(--brand); text-transform: uppercase;
+}
+.dl-mobile-sub {
+  font-family: var(--font-mono); font-size: .7rem;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-3); margin-top: 4px;
+}
+
+/* Headings */
+.dl-heading {
+  font-family: var(--font-head); font-size: 1.45rem; font-weight: 800;
+  letter-spacing: -.03em; color: var(--ink); margin: 0 0 4px;
+}
+.dl-subheading {
+  font-size: .8125rem; color: var(--ink-3);
+  margin: 0 0 24px; font-family: var(--font-mono); letter-spacing: .02em;
+}
+
+/* Error banner */
+.dl-error {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px; padding: 11px 14px;
+  background: var(--brand-wash); border-left: 3px solid var(--brand);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: .8125rem; color: var(--brand); font-family: var(--font-mono);
+}
+
+/* Quick selector tabs & chips */
+.dl-selector-box {
+  margin-bottom: 22px;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
+  padding: 12px 14px;
 }
-
-/* ── Role section header ─────────────────────────────── */
-.role-header {
-  display: flex;
-  align-items: center;
-  gap: var(--s3);
-  padding: var(--s4) var(--s5);
-  border-bottom: 1px solid var(--hairline);
-  background: var(--paper);
+.dl-selector-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
 }
-.role-header__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.dl-selector-label {
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3); font-weight: 600;
 }
-.role-header__dot--head   { background: var(--brand); }
-.role-header__dot--agent  { background: var(--slate); }
-.role-header__dot--member { background: var(--moss); }
-
-.role-header__label {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  font-weight: 500;
+.dl-chips-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
 }
-.role-header__desc {
-  font-size: var(--step--1);
-  color: var(--ink-3);
-  margin-left: auto;
+.dl-chip {
+  padding: 5px 10px;
+  border: 1px solid var(--hairline); border-radius: var(--radius);
+  background: var(--paper); cursor: pointer;
+  font-size: .75rem; color: var(--ink-2);
+  display: flex; align-items: center; gap: 6px;
+  transition: all var(--dur) var(--ease);
 }
-
-/* ── Persona row ─────────────────────────────────────── */
-.persona-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-  width: 100%;
-  padding: var(--s4) var(--s5);
-  border: none;
-  border-bottom: 1px solid var(--hairline);
+.dl-chip:hover {
   background: var(--surface);
-  cursor: pointer;
-  text-align: left;
-  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  border-color: var(--ink-3);
+  color: var(--ink);
 }
-.persona-btn:last-of-type { border-bottom: none; }
-.persona-btn:hover { background: var(--paper); }
-.persona-btn:active { transform: translateY(1px); }
-
-/* Avatar */
-.persona-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: .875rem;
-  flex-shrink: 0;
-  letter-spacing: -.01em;
+.dl-chip.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
-.persona-avatar--head   { background: var(--brand-wash);  color: var(--brand); }
-.persona-avatar--agent  { background: var(--slate-wash);  color: var(--slate); }
-.persona-avatar--member { background: var(--moss-wash);   color: var(--moss);  }
+.dl-chip-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.dl-chip-dot--head   { background: var(--brand); }
+.dl-chip-dot--agent  { background: var(--slate); }
+.dl-chip-dot--member { background: var(--moss);  }
 
-/* Text */
-.persona-info { flex: 1; min-width: 0; }
-.persona-name {
+/* Form fields */
+.dl-field { margin-bottom: 18px; }
+.dl-label-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dl-label {
+  font-family: var(--font-mono); font-size: .72rem;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
   font-weight: 600;
-  font-size: var(--step-0);
-  color: var(--ink);
 }
-.persona-meta {
-  font-family: var(--font-mono);
-  font-size: var(--step--1);
+
+.dl-input {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid var(--hairline); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+  font-size: .9375rem; font-family: var(--font-body);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  outline: none;
+}
+.dl-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-wash);
+}
+.dl-input::placeholder { color: var(--ink-3); }
+
+/* Password wrapper & eye icon */
+.dl-pwd-wrap { position: relative; }
+.dl-pwd-wrap .dl-input { padding-right: 44px; }
+.dl-show-pwd {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-3); padding: 6px; display: flex; align-items: center;
+  transition: color var(--dur) var(--ease);
+}
+.dl-show-pwd:hover { color: var(--ink); }
+
+/* Dynamic password helper under password field */
+.dl-pwd-hint {
+  margin-top: 6px;
+  font-family: var(--font-mono); font-size: .72rem;
   color: var(--ink-3);
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex; align-items: center; justify-content: space-between;
 }
+.dl-pwd-hint-text em {
+  font-style: normal; font-weight: 600; color: var(--ink);
+}
+.dl-pwd-autofill-btn {
+  background: none; border: none; padding: 0;
+  color: var(--brand); font-family: var(--font-mono);
+  font-size: .72rem; cursor: pointer; text-decoration: underline;
+}
+.dl-pwd-autofill-btn:hover { color: var(--brand-shade); }
 
-/* Arrow */
-.persona-arrow {
+/* Submit button */
+.dl-btn {
+  width: 100%; padding: 13px;
+  background: var(--brand); color: #fff; border: none;
+  border-radius: var(--radius); font-family: var(--font-mono);
+  font-size: .85rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  margin-top: 10px;
+}
+.dl-btn:hover { opacity: .9; }
+.dl-btn:active { transform: translateY(1px); }
+
+/* Spinner */
+@keyframes dl-spin { to { transform: rotate(360deg); } }
+.dl-btn-spinner {
+  display: none; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+  border-radius: 50%; animation: dl-spin .6s linear infinite;
+}
+.dl-btn.loading .dl-btn-spinner { display: block; }
+.dl-btn.loading .dl-btn-label   { opacity: .5; }
+
+/* Security notice */
+.dl-security-badge {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 24px; font-family: var(--font-mono); font-size: .68rem;
   color: var(--ink-3);
-  flex-shrink: 0;
-  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.persona-btn:hover .persona-arrow {
-  transform: translateX(3px);
-  color: var(--ink);
-}
-
-/* ── Section divider ─────────────────────────────────── */
-.role-section { border-top: 1px solid var(--hairline); }
-.role-section:first-of-type { border-top: none; }
-
-/* ── Footer note ─────────────────────────────────────── */
-.login-note {
-  margin-top: var(--s5);
-  font-size: var(--step--1);
-  color: var(--ink-3);
-  text-align: center;
-  font-family: var(--font-mono);
-  letter-spacing: .02em;
-}
-
-/* ── Error banner ────────────────────────────────────── */
-.login-error {
-  margin-bottom: var(--s4);
-  padding: var(--s3) var(--s4);
-  border-left: var(--rule) solid var(--brand);
-  background: var(--brand-wash);
-  font-size: var(--step--1);
-  color: var(--brand);
-  font-family: var(--font-mono);
-}
-
-/* ── Mobile ──────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .role-header__desc { display: none; }
-  .persona-meta      { display: none; }
 }
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="login-wrap">
-  <div style="width:100%;max-width:560px;">
+<div class="dl-wrap">
 
-    <!-- Brand -->
-    <div class="login-brand">
-      <a class="login-wordmark" href="/login">Concave Insights</a>
-      <div class="login-sub">Support Portal &mdash; Demo Login</div>
+  <!-- ════════════ LEFT: Branding Panel & Credentials Reference ════════════ -->
+  <aside class="dl-panel">
+    <div class="dl-logo">
+      <div class="dl-logo-mark"><span class="dot"></span>Concave Insights</div>
+      <div class="dl-logo-sub">Support Ticketing System</div>
     </div>
 
-    {% if error %}
-    <div class="login-error">! &nbsp;{{ error }}</div>
-    {% endif %}
+    <div class="dl-panel-body">
+      <h1 class="dl-panel-title">Support<br>that moves<br>at <em>your speed.</em></h1>
+      <p class="dl-panel-desc">A unified enterprise ticketing portal with SLA/TAT enforcement, auto-escalations, and role-based permissions.</p>
+    </div>
 
-    <!-- Persona card -->
-    <div class="login-card">
+    <!-- Demo credentials cheat-sheet -->
+    <div class="dl-creds-card">
+      <div class="dl-creds-head">
+        <span class="dl-creds-title">Demo Credentials</span>
+        <span class="dl-creds-rule">Rule: [Firstname]@123</span>
+      </div>
+      <table class="dl-creds-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Password</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="cred-role cred-role--head">Head</span></td>
+            <td>karan.mehta@concaveinsights.com</td>
+            <td class="cred-pwd">Karan@123</td>
+          </tr>
+          <tr>
+            <td><span class="cred-role cred-role--agent">Agent</span></td>
+            <td>asha.iyer@concaveinsights.com</td>
+            <td class="cred-pwd">Asha@123</td>
+          </tr>
+          <tr>
+            <td><span class="cred-role cred-role--agent">Agent</span></td>
+            <td>rohan.desai@concaveinsights.com</td>
+            <td class="cred-pwd">Rohan@123</td>
+          </tr>
+          <tr>
+            <td><span class="cred-role cred-role--member">Member</span></td>
+            <td>priya.nair@gmail.com</td>
+            <td class="cred-pwd">Priya@123</td>
+          </tr>
+          <tr>
+            <td><span class="cred-role cred-role--member">Member</span></td>
+            <td>amit.sharma@gmail.com</td>
+            <td class="cred-pwd">Amit@123</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="cred-hint">
+        * Every user's password is capitalized first name + <code>@123</code> (e.g. <code>Priya@123</code>).
+      </div>
+    </div>
+  </aside>
 
-      {% macro initials(name) %}{{ name.split(' ')[0][0] }}{{ name.split(' ')[1][0] if name.split(' ')|length > 1 else '' }}{% endmacro %}
+  <!-- ════════════ RIGHT: Password Login Form ════════════ -->
+  <main class="dl-login">
+    <div class="dl-login-inner">
 
-      {% set role_meta = {
-        'head':   ('Support Head',  'Full access — dashboard, escalations, settings'),
-        'agent':  ('Support Agent', 'Queue, reply, resolve, internal notes'),
-        'member': ('Panel Member',  'Raise tickets, track status, reopen'),
-      } %}
+      <!-- Mobile logo -->
+      <div class="dl-mobile-logo">
+        <div class="dl-mobile-wordmark">Concave Insights</div>
+        <div class="dl-mobile-sub">Support Portal — Sign In</div>
+      </div>
 
-      {% for role in ['head', 'agent', 'member'] %}
-        {% set role_users = users | selectattr('role', 'equalto', role) | list %}
-        {% if role_users %}
-        <div class="role-section">
-          <div class="role-header">
-            <span class="role-header__dot role-header__dot--{{ role }}"></span>
-            <span class="role-header__label">{{ role_meta[role][0] }}</span>
-            <span class="role-header__desc">{{ role_meta[role][1] }}</span>
+      <h2 class="dl-heading">Sign in to your account</h2>
+      <p class="dl-subheading">Enter your email and password to access the portal</p>
+
+      {% if error %}
+      <div class="dl-error">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Quick persona picker to autofill email -->
+      <div class="dl-selector-box">
+        <div class="dl-selector-header">
+          <span class="dl-selector-label">Select Demo Persona</span>
+        </div>
+        <div class="dl-chips-row">
+          <button type="button" class="dl-chip"
+                  data-email="karan.mehta@concaveinsights.com" data-pwd="Karan@123" data-name="Karan Mehta">
+            <span class="dl-chip-dot dl-chip-dot--head"></span>
+            Karan (Head)
+          </button>
+          <button type="button" class="dl-chip"
+                  data-email="asha.iyer@concaveinsights.com" data-pwd="Asha@123" data-name="Asha Iyer">
+            <span class="dl-chip-dot dl-chip-dot--agent"></span>
+            Asha (Agent)
+          </button>
+          <button type="button" class="dl-chip"
+                  data-email="priya.nair@gmail.com" data-pwd="Priya@123" data-name="Priya Nair">
+            <span class="dl-chip-dot dl-chip-dot--member"></span>
+            Priya (Member)
+          </button>
+          <button type="button" class="dl-chip"
+                  data-email="amit.sharma@gmail.com" data-pwd="Amit@123" data-name="Amit Sharma">
+            <span class="dl-chip-dot dl-chip-dot--member"></span>
+            Amit (Member)
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Login Form -->
+      <form method="post" action="/login" id="login-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token or '' }}">
+
+        <div class="dl-field">
+          <div class="dl-label-row">
+            <label class="dl-label" for="email">Email Address</label>
           </div>
+          <input
+            class="dl-input"
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="email"
+            placeholder="e.g. priya.nair@gmail.com"
+            value="{{ prefill_email or '' }}"
+            required
+            autofocus
+          >
+        </div>
 
-          {% for user in role_users %}
-          <form method="post" action="/login" style="margin:0;">
-            <input type="hidden" name="user_id" value="{{ user.id }}">
-            <button type="submit" class="persona-btn">
-              <div class="persona-avatar persona-avatar--{{ role }}">
-                {{ initials(user.name) }}
-              </div>
-              <div class="persona-info">
-                <div class="persona-name">{{ user.name }}</div>
-                <div class="persona-meta">
-                  {% if role == 'member' %}
-                    {{ user.city or 'Mumbai' }} &middot; {{ user.email }}
-                  {% elif role == 'agent' %}
-                    {{ user.email }}
-                  {% else %}
-                    {{ user.email }} &middot; admin access
-                  {% endif %}
-                </div>
-              </div>
-              <!-- right arrow svg -->
-              <svg class="persona-arrow" width="16" height="16" viewBox="0 0 24 24"
-                   fill="none" stroke="currentColor" stroke-width="1.5"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 18l6-6-6-6"/>
+        <div class="dl-field">
+          <div class="dl-label-row">
+            <label class="dl-label" for="password">Password</label>
+          </div>
+          <div class="dl-pwd-wrap">
+            <input
+              class="dl-input"
+              type="password"
+              id="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              required
+            >
+            <button type="button" class="dl-show-pwd" id="toggle-pwd" aria-label="Toggle password visibility">
+              <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
-          </form>
-          {% endfor %}
+          </div>
+          <div class="dl-pwd-hint" id="pwd-hint" style="display:none;">
+            <span class="dl-pwd-hint-text">Demo password: <em id="expected-pwd"></em></span>
+            <button type="button" class="dl-pwd-autofill-btn" id="autofill-pwd-btn">Insert password</button>
+          </div>
         </div>
-        {% endif %}
-      {% endfor %}
 
-    </div><!-- /login-card -->
+        <button type="submit" class="dl-btn" id="submit-btn">
+          <div class="dl-btn-spinner"></div>
+          <span class="dl-btn-label">Sign In</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </form>
 
-    <div class="login-note">
-      No password required &mdash; click any name to sign in &mdash; Assessment demo only
+      <div class="dl-security-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Password-protected session authentication
+      </div>
+
     </div>
+  </main>
 
-  </div>
 </div>
+
+<script>
+(function () {
+  'use strict';
+
+  var emailInput     = document.getElementById('email');
+  var pwdInput       = document.getElementById('password');
+  var toggleBtn      = document.getElementById('toggle-pwd');
+  var eyeIcon        = document.getElementById('eye-icon');
+  var pwdHint        = document.getElementById('pwd-hint');
+  var expectedPwd    = document.getElementById('expected-pwd');
+  var autofillPwdBtn = document.getElementById('autofill-pwd-btn');
+  var submitBtn      = document.getElementById('submit-btn');
+
+  var EYE_OPEN = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  var EYE_SHUT = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+  /* Toggle password visibility */
+  toggleBtn.addEventListener('click', function () {
+    var isText = pwdInput.type === 'text';
+    pwdInput.type = isText ? 'password' : 'text';
+    eyeIcon.innerHTML = isText ? EYE_OPEN : EYE_SHUT;
+  });
+
+  /* Persona chip click -> fills email, focuses password, and hints the password */
+  var chips = document.querySelectorAll('.dl-chip');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+
+      emailInput.value = chip.dataset.email;
+      pwdInput.value = '';
+      expectedPwd.textContent = chip.dataset.pwd;
+      pwdHint.style.display = 'flex';
+      pwdInput.focus();
+    });
+  });
+
+  /* Autofill password button in hint */
+  autofillPwdBtn.addEventListener('click', function () {
+    pwdInput.value = expectedPwd.textContent;
+    pwdInput.focus();
+  });
+
+  /* Show password hint if user types known email */
+  emailInput.addEventListener('input', function () {
+    var val = emailInput.value.trim().toLowerCase();
+    var matched = false;
+    chips.forEach(function (c) {
+      if (c.dataset.email.toLowerCase() === val) {
+        expectedPwd.textContent = c.dataset.pwd;
+        pwdHint.style.display = 'flex';
+        c.classList.add('active');
+        matched = true;
+      } else {
+        c.classList.remove('active');
+      }
+    });
+    if (!matched) {
+      pwdHint.style.display = 'none';
+    }
+  });
+
+  /* Loading state on form submit */
+  document.getElementById('login-form').addEventListener('submit', function () {
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+  });
+}());
+</script>
 {% endblock %}
